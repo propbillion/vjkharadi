@@ -1,259 +1,383 @@
-/* =========================================================
-   VJ New Launch - Upper Kharadi | Landing Page Script
-   ========================================================= */
-
-/* ---------- CONFIG: edit only this block ---------- */
-const CONFIG = {
-  projectName: "VJ New Launch - Upper Kharadi",
-  phone: "917820954441",               // call + WhatsApp number (country code, no +)
-
-  // Lead capture endpoint (Google Apps Script web app / CRM webhook).
-  // Leave empty to skip the POST (lead will still go via WhatsApp option on thank-you).
-  formEndpoint: "",
-
-  // Google Ads conversion. Format: "AW-XXXXXXXXXX/AbCdEfGhIj". Leave empty to disable.
-  adsConversion: "",
-
-  // Countdown in top bar. Set to null to hide.
-  tokenDeadline: "2026-11-30T23:59:59+05:30",
-  timerLabel: "Token window closes in",
-
-  // Popup: auto-open after N seconds, once per session. Set 0 to disable.
-  popupDelaySec: 15,
-
-  // Redirect after successful submit (e.g. "thank-you.html"). Empty = show thank-you modal.
-  thankYouUrl: ""
-};
-/* -------------------------------------------------- */
+// Google Ads Conversion Tracking - VJ Upper Kharadi New Launch (WhatsApp + Call)
+document.addEventListener('click', function (e) {
+  if (typeof gtag !== 'function') return;
+  if (e.target.closest('a[href*="wa.me"]')) {
+    gtag('event', 'conversion', { 'send_to': 'AW-17833027272/Na30CJOL874cEMjNubdC' });
+  } else if (e.target.closest('a[href^="tel:"]')) {
+    gtag('event', 'conversion', { 'send_to': 'AW-17833027272/N6sbCIurjb8cEMjNubdC' });
+  }
+});/* ============================================
+   VJ UPPER KHARADI NEW LAUNCH - Production JS
+   Performance-optimized, no framework dependencies
+   ============================================ */
 
 (function () {
-  "use strict";
+  'use strict';
 
-  const $ = (s, el = document) => el.querySelector(s);
-  const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
-
-  /* ---------- Safe storage ---------- */
-  const store = {
-    get(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
-    set(k, v) { try { sessionStorage.setItem(k, v); } catch (e) { /* ignore */ } }
-  };
-
-  /* ---------- UTM / click ID capture ---------- */
-  const TRACK_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "gbraid", "wbraid", "fbclid"];
-  const params = new URLSearchParams(window.location.search);
-  TRACK_KEYS.forEach((k) => { if (params.get(k)) store.set(k, params.get(k)); });
-  const getTracking = () => {
-    const t = {};
-    TRACK_KEYS.forEach((k) => { t[k] = store.get(k) || ""; });
-    return t;
-  };
-
-  /* ---------- Header scroll + mobile nav ---------- */
-  const header = $("#header");
-  const onScroll = () => header.classList.toggle("scrolled", window.scrollY > 8);
-  window.addEventListener("scroll", onScroll, { passive: true });
-  onScroll();
-
-  const navToggle = $("#navToggle");
-  navToggle.addEventListener("click", () => header.classList.toggle("nav-open"));
-  $$("#nav a").forEach((a) => a.addEventListener("click", () => header.classList.remove("nav-open")));
-
-  /* ---------- Reveal on scroll ---------- */
-  const revealEls = $$(".reveal");
-  if ("IntersectionObserver" in window) {
+  // ---------- Reveal on Scroll (lightweight) ----------
+  const reveals = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window && reveals.length) {
     const io = new IntersectionObserver((entries) => {
-      entries.forEach((en) => {
-        if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
       });
-    }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
-    revealEls.forEach((el) => io.observe(el));
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    reveals.forEach((el) => io.observe(el));
   } else {
-    revealEls.forEach((el) => el.classList.add("in"));
+    reveals.forEach((el) => el.classList.add('in'));
   }
 
-  /* ---------- Countdown ---------- */
-  const timerEl = $("#topbarTimer");
-  if (CONFIG.tokenDeadline && timerEl) {
-    const end = new Date(CONFIG.tokenDeadline).getTime();
-    const pad = (n) => String(n).padStart(2, "0");
-    const tick = () => {
-      const diff = end - Date.now();
-      if (diff <= 0) { timerEl.hidden = true; return; }
-      const d = Math.floor(diff / 86400000);
-      const h = Math.floor((diff % 86400000) / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      timerEl.textContent = `${CONFIG.timerLabel}: ${d}d ${pad(h)}h ${pad(m)}m ${pad(s)}s`;
-      timerEl.hidden = false;
-    };
-    tick();
-    setInterval(tick, 1000);
-  }
+  // ---------- Header elevation on scroll ----------
+  const header = document.querySelector('.header');
+  const heroBg = document.querySelector('.hero-bg');
+  let ticking = false;
 
-  /* ---------- Modals ---------- */
-  const leadModal = $("#leadModal");
-  const thankModal = $("#thankModal");
-  let lastSource = "Direct";
+  if (header || heroBg) {
+    // Activate parallax class once (avoids transition on initial paint)
+    if (heroBg) {
+      requestAnimationFrame(() => heroBg.classList.add('parallax-on'));
+    }
 
-  const openModal = (m) => {
-    $$(".modal.open").forEach((x) => closeModal(x));
-    m.classList.add("open");
-    m.setAttribute("aria-hidden", "false");
-    document.body.classList.add("modal-lock");
-    const first = m.querySelector("input:not([type=checkbox])");
-    if (first && window.innerWidth > 640) setTimeout(() => first.focus(), 250);
-  };
-  const closeModal = (m) => {
-    m.classList.remove("open");
-    m.setAttribute("aria-hidden", "true");
-    if (!$(".modal.open")) document.body.classList.remove("modal-lock");
-  };
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const y = window.scrollY;
 
-  $$(".js-open-modal").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      lastSource = btn.dataset.source || "Button";
-      const form = $("form", leadModal);
-      form.dataset.source = "Popup - " + lastSource;
-      if (btn.dataset.config) $("select[name=config]", form).value = btn.dataset.config;
-      store.set("popupShown", "1");
-      openModal(leadModal);
-    });
-  });
+          if (header) {
+            if (y > 24) {
+              header.style.boxShadow = '0 2px 18px -8px rgba(0,0,0,0.08)';
+            } else {
+              header.style.boxShadow = 'none';
+            }
+          }
 
-  $$("[data-close]").forEach((el) => {
-    el.addEventListener("click", () => closeModal(el.closest(".modal")));
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") $$(".modal.open").forEach(closeModal);
-  });
+          // Cinematic hero parallax: image rises slowly as user scrolls
+          // Only active while hero is in view (first 100vh)
+          if (heroBg && y < window.innerHeight) {
+            // Image translates up at 0.35x scroll speed - subtle, premium
+            const translateY = -y * 0.35;
+            // Slight scale to prevent edge gaps from showing
+            const scale = 1 + (y / window.innerHeight) * 0.06;
+            heroBg.style.transform = `translate3d(0, ${translateY}px, 0) scale(${scale})`;
+          }
 
-  // Auto popup once per session
-  if (CONFIG.popupDelaySec > 0 && !store.get("popupShown") && !store.get("leadDone")) {
-    setTimeout(() => {
-      if (!$(".modal.open") && !store.get("leadDone")) {
-        store.set("popupShown", "1");
-        $("form", leadModal).dataset.source = "Popup - Auto";
-        openModal(leadModal);
+          ticking = false;
+        });
+        ticking = true;
       }
-    }, CONFIG.popupDelaySec * 1000);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
   }
 
-  /* ---------- WhatsApp + call ---------- */
-  const waLink = (source, lead) => {
-    let msg = `Hi, I'm interested in ${CONFIG.projectName}. Please share the price sheet and early access details.`;
-    if (lead && lead.name) msg = `Hi, I'm ${lead.name}. I'm interested in ${lead.config || "a residence"} at ${CONFIG.projectName}. Please share the cost sheet and token details.`;
-    return `https://wa.me/${CONFIG.phone}?text=${encodeURIComponent(msg)}`;
-  };
-
-  let lastLead = null;
-  $$(".js-whatsapp").forEach((a) => {
-    a.addEventListener("click", (e) => {
+  // ---------- Smooth Scroll for Hash Links ----------
+  document.querySelectorAll('a[href^="#"]').forEach((a) => {
+    a.addEventListener('click', function (e) {
+      const href = this.getAttribute('href');
+      if (!href || href === '#') return;
+      const target = document.querySelector(href);
+      if (!target) return;
       e.preventDefault();
-      pushEvent("whatsapp_click", { source: a.dataset.source || "" });
-      window.open(waLink(a.dataset.source, lastLead), "_blank", "noopener");
+      const offset = 116; // header + action bar
+      const top = target.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top, behavior: 'smooth' });
     });
   });
-  $$(".js-call").forEach((a) => a.addEventListener("click", () => pushEvent("call_click", {})));
 
-  /* ---------- Analytics helpers ---------- */
-  function pushEvent(name, data) {
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push(Object.assign({ event: name }, data));
+  // ---------- Pre-Register Form (bottom) ----------
+  const form = document.getElementById('preForm');
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nameEl = document.getElementById('f_name');
+      const mobEl = document.getElementById('f_mob');
+
+      const name = (nameEl.value || '').trim();
+      const mob = (mobEl.value || '').trim().replace(/\D/g, '');
+
+      let ok = true;
+      if (!name) {
+        nameEl.style.borderBottomColor = '#a8444a';
+        nameEl.focus();
+        ok = false;
+      } else {
+        nameEl.style.borderBottomColor = '';
+      }
+
+      if (mob.length < 10) {
+        mobEl.style.borderBottomColor = '#a8444a';
+        if (ok) mobEl.focus();
+        ok = false;
+      } else {
+        mobEl.style.borderBottomColor = '';
+      }
+
+      if (!ok) return;
+
+      const message =
+        'Hi%2C+I+want+Priority+Token+Access+for+the+VJ+UPPER+KHARADI+NEW+LAUNCH+and+the+pre-launch+pricing.%0A%0A' +
+        'Name%3A+' + encodeURIComponent(name) + '%0A' +
+        'Mobile%3A+%2B91+' + encodeURIComponent(mob);
+
+      if (typeof gtag === 'function') { gtag('event', 'conversion', { 'send_to': 'AW-17833027272/Na30CJOL874cEMjNubdC' }); }
+      window.open('https://wa.me/917820954441?text=' + message, '_blank');
+
+      const btn = form.querySelector('button[type="submit"]');
+      if (btn) {
+        const original = btn.innerHTML;
+        btn.innerHTML = 'Redirecting to WhatsApp...';
+        btn.disabled = true;
+        setTimeout(() => {
+          btn.innerHTML = original;
+          btn.disabled = false;
+          form.reset();
+        }, 2400);
+      }
+    });
   }
-  function fireConversion() {
-    if (CONFIG.adsConversion && typeof window.gtag === "function") {
-      window.gtag("event", "conversion", { send_to: CONFIG.adsConversion });
+
+  // ---------- Hero Form (above the fold) ----------
+  const heroForm = document.getElementById('heroForm');
+  if (heroForm) {
+    heroForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nameEl = document.getElementById('hf_name');
+      const mobEl = document.getElementById('hf_mob');
+
+      const name = (nameEl.value || '').trim();
+      const mob = (mobEl.value || '').trim().replace(/\D/g, '');
+
+      let ok = true;
+      if (!name) {
+        nameEl.classList.add('hf-error');
+        nameEl.focus();
+        ok = false;
+      } else {
+        nameEl.classList.remove('hf-error');
+      }
+
+      if (mob.length < 10) {
+        mobEl.classList.add('hf-error');
+        if (ok) mobEl.focus();
+        ok = false;
+      } else {
+        mobEl.classList.remove('hf-error');
+      }
+
+      if (!ok) return;
+
+      const message =
+        'Hi%2C+I+want+the+VJ+UPPER+KHARADI+NEW+LAUNCH+pre-launch+price+and+Priority+Token+Access.%0A%0A' +
+        'Name%3A+' + encodeURIComponent(name) + '%0A' +
+        'Mobile%3A+%2B91+' + encodeURIComponent(mob);
+
+      if (typeof gtag === 'function') { gtag('event', 'conversion', { 'send_to': 'AW-17833027272/Na30CJOL874cEMjNubdC' }); }
+      window.open('https://wa.me/917820954441?text=' + message, '_blank');
+
+      const btn = heroForm.querySelector('button[type="submit"]');
+      if (btn) {
+        const original = btn.innerHTML;
+        btn.innerHTML = 'Redirecting to WhatsApp...';
+        btn.disabled = true;
+        setTimeout(() => {
+          btn.innerHTML = original;
+          btn.disabled = false;
+          heroForm.reset();
+        }, 2400);
+      }
+    });
+  }
+
+  // ---------- Lazy image fallback for older browsers ----------
+  if (!('loading' in HTMLImageElement.prototype)) {
+    const lazyImgs = document.querySelectorAll('img[loading="lazy"]');
+    if ('IntersectionObserver' in window) {
+      const imgIO = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const img = entry.target;
+            if (img.dataset.src) img.src = img.dataset.src;
+            imgIO.unobserve(img);
+          }
+        });
+      });
+      lazyImgs.forEach((img) => imgIO.observe(img));
     }
   }
 
-  /* ---------- Forms ---------- */
-  const phoneOk = (v) => /^[6-9]\d{9}$/.test(v);
-  const nameOk = (v) => v.trim().length >= 2 && /^[a-zA-Z .'-]+$/.test(v.trim());
+})();
 
-  const setError = (input, msg) => {
-    const field = input.closest(".field");
-    if (!field) return;
-    field.classList.add("error");
-    let m = field.querySelector(".err-msg");
-    if (!m) { m = document.createElement("span"); m.className = "err-msg"; field.appendChild(m); }
-    m.textContent = msg;
-  };
-  const clearError = (input) => {
-    const field = input.closest(".field");
-    if (!field) return;
-    field.classList.remove("error");
-    const m = field.querySelector(".err-msg");
-    if (m) m.remove();
-  };
+/* ============================================
+   V5 - Auto-sliding galleries (gentle, pauses on interaction)
+   ============================================ */
+(function () {
+  'use strict';
 
-  $$(".lead-form").forEach((form) => {
-    const phone = $("input[name=phone]", form);
-    const name = $("input[name=name]", form);
+  const galleries = document.querySelectorAll('[data-autoslide="true"]');
+  if (!galleries.length) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    phone.addEventListener("input", () => {
-      phone.value = phone.value.replace(/\D/g, "").slice(0, 10);
-      clearError(phone);
-    });
-    name.addEventListener("input", () => clearError(name));
+  galleries.forEach((gallery) => {
+    const track = gallery.querySelector('[data-track]');
+    if (!track) return;
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      let valid = true;
-      if (!nameOk(name.value)) { setError(name, "Please enter a valid name"); valid = false; }
-      if (!phoneOk(phone.value)) { setError(phone, "Enter a valid 10-digit mobile number"); valid = false; }
-      const consent = $("input[name=consent]", form);
-      if (consent && !consent.checked) { alertConsent(consent); valid = false; }
-      if (!valid) return;
+    let paused = false;
+    let resumeTimer = null;
+    const SLIDE_INTERVAL = 4500; // 4.5s per advance - slow, premium
 
-      const btn = $("button[type=submit]", form);
-      const btnText = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = "Submitting...";
+    const advance = () => {
+      if (paused) return;
+      const slide = track.querySelector('.ag-slide');
+      if (!slide) return;
+      const slideWidth = slide.getBoundingClientRect().width + 16; // approx gap
+      const maxScroll = track.scrollWidth - track.clientWidth;
 
-      const lead = Object.assign({
-        name: name.value.trim(),
-        phone: "+91" + phone.value,
-        config: ($("select[name=config]", form) || {}).value || "",
-        source: form.dataset.source || "Form",
-        project: CONFIG.projectName,
-        page: window.location.href.split("?")[0],
-        submitted_at: new Date().toISOString()
-      }, getTracking());
-
-      try {
-        if (CONFIG.formEndpoint) {
-          const body = new URLSearchParams(lead);
-          await fetch(CONFIG.formEndpoint, { method: "POST", mode: "no-cors", body });
-        }
-      } catch (err) {
-        console.warn("Lead POST failed:", err);
-      }
-
-      lastLead = lead;
-      store.set("leadDone", "1");
-      pushEvent("lead_submit", { source: lead.source, config: lead.config });
-      fireConversion();
-
-      form.reset();
-      btn.disabled = false;
-      btn.textContent = btnText;
-
-      if (CONFIG.thankYouUrl) {
-        window.location.href = CONFIG.thankYouUrl;
+      // If we're near the end, loop back to start
+      if (track.scrollLeft + slideWidth > maxScroll - 4) {
+        track.scrollTo({ left: 0, behavior: 'smooth' });
       } else {
-        openModal(thankModal);
+        track.scrollBy({ left: slideWidth, behavior: 'smooth' });
       }
+    };
+
+    const pause = (durationMs = 7000) => {
+      paused = true;
+      clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(() => { paused = false; }, durationMs);
+    };
+
+    // Pause on user interaction
+    track.addEventListener('touchstart', () => pause(8000), { passive: true });
+    track.addEventListener('mousedown', () => pause(8000));
+    track.addEventListener('wheel', () => pause(4000), { passive: true });
+    gallery.addEventListener('mouseenter', () => { paused = true; });
+    gallery.addEventListener('mouseleave', () => {
+      clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(() => { paused = false; }, 600);
     });
+
+    // Only auto-advance when in view
+    let inView = false;
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => { inView = e.isIntersecting; });
+      }, { threshold: 0.3 });
+      io.observe(gallery);
+    } else {
+      inView = true;
+    }
+
+    setInterval(() => {
+      if (inView && !paused && document.visibilityState === 'visible') {
+        advance();
+      }
+    }, SLIDE_INTERVAL);
   });
+})();
 
-  function alertConsent(cb) {
-    const label = cb.closest(".consent");
-    if (!label) return;
-    label.style.color = "#d70015";
-    setTimeout(() => { label.style.color = ""; }, 2000);
-  }
+/* ============================================
+   V7 - Smooth lazy image fade-in
+   Adds .img-loaded class to lazy imgs once they decode,
+   preventing the "pop" of late images.
+   ============================================ */
+(function () {
+  'use strict';
 
-  /* ---------- Footer year ---------- */
-  const y = $("#year");
-  if (y) y.textContent = new Date().getFullYear();
+  const lazyImgs = document.querySelectorAll('img[loading="lazy"]');
+  if (!lazyImgs.length) return;
+
+  const markLoaded = (img) => {
+    img.classList.add('img-loaded');
+  };
+
+  lazyImgs.forEach((img) => {
+    if (img.complete && img.naturalWidth > 0) {
+      // Already cached
+      markLoaded(img);
+    } else {
+      img.addEventListener('load', () => markLoaded(img), { once: true });
+      img.addEventListener('error', () => markLoaded(img), { once: true });
+    }
+  });
+})();
+
+/* ============================================
+   V10 - Synced gallery captions
+   Reads data-caption per slide, mirrors it into the rail
+   beneath the gallery, animates in/out with slide changes.
+   ============================================ */
+(function () {
+  'use strict';
+
+  const galleries = document.querySelectorAll('.auto-gallery');
+  if (!galleries.length) return;
+
+  galleries.forEach((gallery) => {
+    const track = gallery.querySelector('[data-track]');
+    const rail = gallery.querySelector('[data-caption-rail]');
+    if (!track || !rail) return;
+
+    const slides = Array.from(track.querySelectorAll('.ag-slide'));
+    const captions = slides.map((s) => s.getAttribute('data-caption') || '');
+    if (!captions.some(Boolean)) return;
+
+    // Build caption elements once
+    captions.forEach((text, idx) => {
+      const el = document.createElement('span');
+      el.className = 'ag-caption';
+      el.textContent = text;
+      if (idx === 0) el.classList.add('is-active');
+      rail.appendChild(el);
+    });
+    const captionEls = rail.querySelectorAll('.ag-caption');
+
+    let activeIdx = 0;
+    let frame = 0;
+
+    const setActive = (idx) => {
+      if (idx === activeIdx) return;
+      captionEls[activeIdx]?.classList.remove('is-active');
+      captionEls[idx]?.classList.add('is-active');
+      activeIdx = idx;
+    };
+
+    const onScroll = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const trackRect = track.getBoundingClientRect();
+        const center = trackRect.left + trackRect.width / 2;
+        let best = 0;
+        let bestDist = Infinity;
+        slides.forEach((slide, i) => {
+          const r = slide.getBoundingClientRect();
+          const slideCenter = r.left + r.width / 2;
+          const d = Math.abs(slideCenter - center);
+          if (d < bestDist) { bestDist = d; best = i; }
+        });
+        setActive(best);
+      });
+    };
+
+    track.addEventListener('scroll', onScroll, { passive: true });
+    // Re-sync on resize
+    window.addEventListener('resize', onScroll, { passive: true });
+  });
+})();
+/* ---------- Privacy Modal ---------- */
+(function () {
+  'use strict';
+  const pm = document.getElementById('privacyModal');
+  if (!pm) return;
+  const openLinks = document.querySelectorAll('[data-open-privacy]');
+  const closeBtn = pm.querySelector('[data-close-privacy]');
+  const open = () => { pm.classList.add('open'); pm.setAttribute('aria-hidden','false'); document.body.style.overflow = 'hidden'; };
+  const close = () => { pm.classList.remove('open'); pm.setAttribute('aria-hidden','true'); document.body.style.overflow = ''; };
+  openLinks.forEach((l) => l.addEventListener('click', (e) => { e.preventDefault(); open(); }));
+  if (closeBtn) closeBtn.addEventListener('click', close);
+  pm.addEventListener('click', (e) => { if (e.target === pm) close(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
 })();
