@@ -5,7 +5,7 @@
 /* ---------- CONFIG: edit only this block ---------- */
 const CONFIG = {
   projectName: "VJ New Launch - Upper Kharadi",
-  phone: "918857090799",               // call + WhatsApp number (country code, no +)
+  phone: "917820954441",               // call + WhatsApp number (country code, no +)
 
   // Lead capture endpoint (Google Apps Script web app / CRM webhook).
   // Leave empty to skip the POST (lead will still go via WhatsApp option on thank-you).
