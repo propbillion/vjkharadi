@@ -381,3 +381,21 @@ document.addEventListener('click', function (e) {
   pm.addEventListener('click', (e) => { if (e.target === pm) close(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
 })();
+
+/* ---------- VJ Upper Kharadi - Parking & Maintenance calculator (routes to WhatsApp) ---------- */
+(function () {
+  'use strict';
+  const form = document.getElementById('pmForm');
+  const btn = document.getElementById('pmBtn');
+  const out = document.getElementById('pmParkOut');
+  if (!form || !btn) return;
+  const update = () => {
+    const cfg = (form.querySelector('input[name="pm_cfg"]:checked') || {}).value || '2 BHK';
+    const park = (form.querySelector('input[name="pm_park"]:checked') || {}).value || '1 car park';
+    if (out) out.textContent = (park.indexOf('2') === 0 ? '2 Cars' : '1 Car') + ' · ' + cfg;
+    const msg = 'Hi, please calculate parking and monthly maintenance for ' + cfg + ' with ' + park + ' at the NEW VJ Upper Kharadi launch.';
+    btn.href = 'https://wa.me/917820954441?text=' + encodeURIComponent(msg);
+  };
+  form.addEventListener('change', update);
+  update();
+})();
