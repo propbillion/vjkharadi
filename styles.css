@@ -5672,3 +5672,10 @@ letter-spacing: 0.045em !important;
 }
 .tsv-vj .metallic-num.mt-sm { font-size: clamp(24px, 2.3vw, 32px); }
 .tsv-vj .metallic-num.mt-sm small { display: block; margin: 0.35rem 0 0; vertical-align: baseline; }
+
+/* ===== VJ Upper Kharadi - plan zoom + blur tuning ===== */
+#plans .plan-card .gated { padding: 10px; }
+#plans .plan-card .gated > img { transform: scale(1.18); filter: blur(2.1px) contrast(1.05); }
+#plans .plan-card:hover .gated > img { transform: scale(1.22); filter: blur(1.45px) contrast(1.05); }
+#blueprint .plan-card .gated > img { filter: blur(1.9px) contrast(1.05); }
+#blueprint .plan-card:hover .gated > img { filter: blur(1.3px) contrast(1.05); }
