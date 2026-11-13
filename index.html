@@ -384,6 +384,42 @@
 
 
 
+<!-- ============================ PARKING & MAINTENANCE CALCULATOR ============================ -->
+<section id="parking" class="section-tight bg-bone">
+  <div class="container-narrow">
+    <div class="pm-card reveal">
+      <div class="pm-intro">
+        <span class="eyebrow">Parking &amp; Maintenance</span>
+        <h3 class="pm-title">Know your parking &amp; <em>monthly maintenance.</em></h3>
+        <p class="pm-sub">Select your home and parking need. We'll share the exact parking allotment and per-month maintenance on WhatsApp.</p>
+      </div>
+      <form class="pm-form" id="pmForm" onsubmit="return false;">
+        <div class="pm-group" role="radiogroup" aria-label="Configuration">
+          <span class="pm-label">Configuration</span>
+          <div class="pm-chips">
+            <label class="pm-chip"><input type="radio" name="pm_cfg" value="2 BHK" checked><span>2 BHK</span></label>
+            <label class="pm-chip"><input type="radio" name="pm_cfg" value="3 BHK"><span>3 BHK</span></label>
+            <label class="pm-chip"><input type="radio" name="pm_cfg" value="3 BHK XL"><span>3 BHK XL</span></label>
+          </div>
+        </div>
+        <div class="pm-group" role="radiogroup" aria-label="Car parking">
+          <span class="pm-label">Car Parking</span>
+          <div class="pm-chips">
+            <label class="pm-chip"><input type="radio" name="pm_park" value="1 car park" checked><span>1 Car</span></label>
+            <label class="pm-chip"><input type="radio" name="pm_park" value="2 car parks"><span>2 Cars</span></label>
+          </div>
+        </div>
+        <div class="pm-result">
+          <div class="pm-row"><span>Parking</span><strong id="pmParkOut">1 Car · 2 BHK</strong></div>
+          <div class="pm-row"><span>Maintenance / month</span><strong>Shared on WhatsApp</strong></div>
+        </div>
+        <a id="pmBtn" href="https://wa.me/917820954441?text=Hi%2C%20please%20calculate%20parking%20and%20monthly%20maintenance%20for%202%20BHK%20with%201%20car%20park%20at%20the%20NEW%20VJ%20Upper%20Kharadi%20launch." target="_blank" rel="noopener" class="btn btn-glass-brand btn-block">Calculate Parking &amp; Maintenance <span>→</span></a>
+        <p class="pm-note">Exact figures as per official cost sheet. Instant reply on WhatsApp.</p>
+      </form>
+    </div>
+  </div>
+</section>
+
 <!-- ============================ SKY CLUB ============================ -->
 <section id="skyclub" class="section bg-bone">
   <div class="container">
